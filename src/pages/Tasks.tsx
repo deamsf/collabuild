@@ -1,132 +1,217 @@
-import React from 'react';
-import { Calendar, ListTodo, GitBranch } from 'lucide-react';
+import React, { useState } from 'react';
+import { ListTodo, Calendar, ClipboardList } from 'lucide-react';
 import { useProjectContext } from '../context/ProjectContext';
 import { useTasks } from '../hooks/useTasks';
+import { usePhases } from '../hooks/usePhases';
+import { TaskModal } from '../components/TaskModal';
+import { PhaseModal } from '../components/PhaseModal';
+import { ConfirmationModal } from '../components/ConfirmationModal';
+import { KanbanBoard } from '../components/tasks/KanbanBoard';
+import { AgendaView } from '../components/tasks/AgendaView';
+import { PlanningView } from '../components/tasks/PlanningView';
+import { Task, TaskStatus, Phase } from '../types';
+
+type TaskView = 'tasks' | 'agenda' | 'planning';
 
 export const Tasks = () => {
   const { currentProject } = useProjectContext();
-  const { tasks, loading, error } = useTasks(currentProject?.id);
+  const { tasks, addTask, updateTask, updateTaskStatus, removeTask } = useTasks(currentProject?.id);
+  const { phases, addPhase, updatePhase, removePhase } = usePhases(currentProject?.id);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [isPhaseModalOpen, setIsPhaseModalOpen] = useState(false);
+  const [isDeleteTaskModalOpen, setIsDeleteTaskModalOpen] = useState(false);
+  const [isDeletePhaseModalOpen, setIsDeletePhaseModalOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [phaseToDelete, setPhaseToDelete] = useState<Phase | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [editingPhase, setEditingPhase] = useState<Phase | undefined>();
+  const [currentView, setCurrentView] = useState<TaskView>('tasks');
 
   if (!currentProject) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <p className="text-gray-600">Please select a project to view tasks.</p>
+      <div className="bg-background-light dark:bg-background-dark p-6 rounded-lg shadow-md">
+        <p className="text-text-light-secondary dark:text-text-dark-secondary">
+          Please select a project to view tasks.
+        </p>
       </div>
     );
   }
 
-  if (loading) {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <p className="text-gray-600">Loading tasks...</p>
-      </div>
-    );
-  }
+  const handleTaskSubmit = async (taskData: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'completion_date'>) => {
+    if (editingTask) {
+      await updateTask({ ...taskData, id: editingTask.id });
+    } else {
+      await addTask(taskData);
+    }
+    setIsTaskModalOpen(false);
+    setEditingTask(undefined);
+  };
 
-  if (error) {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <p className="text-red-600">Error loading tasks: {error}</p>
-      </div>
-    );
-  }
+  const handlePhaseSubmit = async (phaseData: Omit<Phase, 'id' | 'created_at' | 'updated_at'>) => {
+    if (editingPhase) {
+      await updatePhase({ ...phaseData, id: editingPhase.id });
+    } else {
+      await addPhase(phaseData);
+    }
+    setIsPhaseModalOpen(false);
+    setEditingPhase(undefined);
+  };
+
+  const handleTaskDelete = async () => {
+    if (taskToDelete) {
+      await removeTask(taskToDelete.id);
+      setIsDeleteTaskModalOpen(false);
+      setTaskToDelete(null);
+    }
+  };
+
+  const handlePhaseDelete = async () => {
+    if (phaseToDelete) {
+      await removePhase(phaseToDelete.id);
+      setIsDeletePhaseModalOpen(false);
+      setPhaseToDelete(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-primary">Tasks & Planning</h1>
+      <h1 className="text-3xl font-bold text-text-light-primary dark:text-text-dark-primary">
+        Tasks
+      </h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center gap-2 mb-4">
-            <Calendar size={24} className="text-secondary" />
-            <h2 className="text-xl font-semibold">Agenda</h2>
-          </div>
-          <div className="space-y-4">
-            {tasks.map(task => (
-              <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <h3 className="font-medium">{task.title}</h3>
-                  <p className="text-sm text-gray-600">{task.phase}</p>
-                </div>
-                <span className="text-sm text-gray-500">
-                  Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No date set'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center gap-2 mb-4">
-            <ListTodo size={24} className="text-secondary" />
-            <h2 className="text-xl font-semibold">Kanban Board</h2>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-3">
-              <h3 className="font-medium text-gray-600">To Do</h3>
-              {tasks.filter(t => t.status === 'to-do').map(task => (
-                <div key={task.id} className="p-3 bg-gray-50 rounded-lg">
-                  <h4 className="font-medium">{task.title}</h4>
-                  <p className="text-sm text-gray-500">{task.phase}</p>
-                </div>
-              ))}
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <nav className="flex gap-4">
+          <button
+            onClick={() => setCurrentView('tasks')}
+            className={`px-4 py-2 border-b-2 ${
+              currentView === 'tasks'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-text-light-secondary dark:text-text-dark-secondary hover:text-text-light-primary dark:hover:text-text-dark-primary'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <ListTodo size={20} />
+              <span>Tasks</span>
             </div>
-            <div className="space-y-3">
-              <h3 className="font-medium text-gray-600">In Progress</h3>
-              {tasks.filter(t => t.status === 'in-progress').map(task => (
-                <div key={task.id} className="p-3 bg-gray-50 rounded-lg">
-                  <h4 className="font-medium">{task.title}</h4>
-                  <p className="text-sm text-gray-500">{task.phase}</p>
-                </div>
-              ))}
+          </button>
+          <button
+            onClick={() => setCurrentView('agenda')}
+            className={`px-4 py-2 border-b-2 ${
+              currentView === 'agenda'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-text-light-secondary dark:text-text-dark-secondary hover:text-text-light-primary dark:hover:text-text-dark-primary'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Calendar size={20} />
+              <span>Agenda</span>
             </div>
-            <div className="space-y-3">
-              <h3 className="font-medium text-gray-600">Done</h3>
-              {tasks.filter(t => t.status === 'done').map(task => (
-                <div key={task.id} className="p-3 bg-gray-50 rounded-lg">
-                  <h4 className="font-medium">{task.title}</h4>
-                  <p className="text-sm text-gray-500">{task.phase}</p>
-                </div>
-              ))}
+          </button>
+          <button
+            onClick={() => setCurrentView('planning')}
+            className={`px-4 py-2 border-b-2 ${
+              currentView === 'planning'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-text-light-secondary dark:text-text-dark-secondary hover:text-text-light-primary dark:hover:text-text-dark-primary'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <ClipboardList size={20} />
+              <span>Planning</span>
             </div>
-          </div>
-        </div>
+          </button>
+        </nav>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <div className="flex items-center gap-2 mb-6">
-          <GitBranch size={24} className="text-secondary" />
-          <h2 className="text-xl font-semibold">Project Phases</h2>
-        </div>
-        <div className="space-y-4">
-          {Array.from(new Set(tasks.map(t => t.phase))).map((phase, index, array) => {
-            const phaseProgress = Math.round(
-              (tasks.filter(t => t.phase === phase && t.status === 'done').length / 
-              tasks.filter(t => t.phase === phase).length) * 100
-            );
-            
-            return (
-              <div key={phase} className="relative">
-                <div className="flex items-center gap-4">
-                  <div className="w-32 shrink-0">
-                    <h3 className="font-medium">{phase}</h3>
-                  </div>
-                  <div className="flex-1 h-6 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-secondary transition-all duration-500"
-                      style={{ width: `${phaseProgress}%` }}
-                    />
-                  </div>
-                  <span className="w-16 text-right">{phaseProgress}%</span>
-                </div>
-                {index < array.length - 1 && (
-                  <div className="absolute left-16 top-8 bottom-0 w-px bg-gray-200" />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {currentView === 'tasks' && (
+        <KanbanBoard
+          tasks={tasks}
+          onUpdateStatus={updateTaskStatus}
+          onEditTask={(task) => {
+            setEditingTask(task);
+            setIsTaskModalOpen(true);
+          }}
+          onDeleteTask={(taskId) => {
+            const taskToDelete = tasks.find(t => t.id === taskId);
+            if (taskToDelete) {
+              setTaskToDelete(taskToDelete);
+              setIsDeleteTaskModalOpen(true);
+            }
+          }}
+          onCreateTask={() => {
+            setEditingTask(undefined);
+            setIsTaskModalOpen(true);
+          }}
+        />
+      )}
+
+      {currentView === 'agenda' && <AgendaView />}
+
+      {currentView === 'planning' && (
+        <PlanningView
+          phases={phases}
+          onCreatePhase={() => {
+            setEditingPhase(undefined);
+            setIsPhaseModalOpen(true);
+          }}
+          onEditPhase={(phase) => {
+            setEditingPhase(phase);
+            setIsPhaseModalOpen(true);
+          }}
+          onDeletePhase={(phase) => {
+            setPhaseToDelete(phase);
+            setIsDeletePhaseModalOpen(true);
+          }}
+        />
+      )}
+
+      <TaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => {
+          setIsTaskModalOpen(false);
+          setEditingTask(undefined);
+        }}
+        onSubmit={handleTaskSubmit}
+        projectId={currentProject?.id || ''}
+        task={editingTask}
+        mode={editingTask ? 'edit' : 'create'}
+      />
+
+      <PhaseModal
+        isOpen={isPhaseModalOpen}
+        onClose={() => {
+          setIsPhaseModalOpen(false);
+          setEditingPhase(undefined);
+        }}
+        onSubmit={handlePhaseSubmit}
+        projectId={currentProject?.id || ''}
+        phase={editingPhase}
+        mode={editingPhase ? 'edit' : 'create'}
+      />
+
+      <ConfirmationModal
+        isOpen={isDeleteTaskModalOpen}
+        onClose={() => {
+          setIsDeleteTaskModalOpen(false);
+          setTaskToDelete(null);
+        }}
+        onConfirm={handleTaskDelete}
+        title="Delete Task"
+        message={`Are you sure you want to delete "${taskToDelete?.title}"? This action cannot be undone.`}
+        confirmLabel="Delete Task"
+      />
+
+      <ConfirmationModal
+        isOpen={isDeletePhaseModalOpen}
+        onClose={() => {
+          setIsDeletePhaseModalOpen(false);
+          setPhaseToDelete(null);
+        }}
+        onConfirm={handlePhaseDelete}
+        title="Delete Phase"
+        message={`Are you sure you want to delete "${phaseToDelete?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete Phase"
+      />
     </div>
   );
 };

@@ -10,12 +10,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
     "@supabase/supabase-js": "^2.39.7",
+    "@tiptap/extension-link": "^2.2.4",
+    "@tiptap/extension-underline": "^2.2.4",
+    "@tiptap/react": "^2.2.4",
+    "@tiptap/starter-kit": "^2.2.4",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-dropzone": "^14.2.3",
     "react-router-dom": "^6.22.2",
     "recharts": "^2.12.2",
+    "tiptap": "^1.32.2",
     "zustand": "^4.5.1"
   },
   "devDependencies": {

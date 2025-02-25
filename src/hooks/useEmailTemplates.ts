@@ -31,5 +31,62 @@ export function useEmailTemplates(projectId: string | undefined) {
     }
   }
 
-  return { templates, loading, error, refetch: fetchTemplates };
+  async function addTemplate(template: Omit<EmailTemplate, 'id' | 'created_at' | 'last_modified'>) {
+    try {
+      const { error } = await supabase
+        .from('email_templates')
+        .insert([{
+          ...template,
+          last_modified: new Date().toISOString()
+        }]);
+      
+      if (error) throw error;
+      await fetchTemplates();
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async function updateTemplate(template: EmailTemplate) {
+    try {
+      const { error } = await supabase
+        .from('email_templates')
+        .update({
+          name: template.name,
+          subject: template.subject,
+          description: template.description,
+          last_modified: new Date().toISOString()
+        })
+        .eq('id', template.id);
+      
+      if (error) throw error;
+      await fetchTemplates();
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async function removeTemplate(templateId: string) {
+    try {
+      const { error } = await supabase
+        .from('email_templates')
+        .delete()
+        .eq('id', templateId);
+      
+      if (error) throw error;
+      await fetchTemplates();
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  return {
+    templates,
+    loading,
+    error,
+    addTemplate,
+    updateTemplate,
+    removeTemplate,
+    refetch: fetchTemplates
+  };
 }

@@ -30,16 +30,16 @@ export const Navbar = ({ isCollapsed, onToggleCollapse }: NavbarProps) => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className={`h-screen bg-[#012c3f] text-white flex flex-col fixed left-0 top-0 transition-all duration-300
+    <nav className={`h-screen bg-primary text-white flex flex-col fixed left-0 top-0 transition-all duration-300
       ${isCollapsed ? 'w-20' : 'w-64'}`}>
       <div className="p-6 flex items-center justify-between">
-        <h1 className={`text-2xl font-bold text-[#1ca5b8] whitespace-nowrap transition-opacity duration-300
+        <h1 className={`text-3xl font-bold text-secondary whitespace-nowrap transition-opacity duration-300
           ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100'}`}>
-          Kompanjon
+          Collabuild
         </h1>
         <button 
           onClick={() => onToggleCollapse(!isCollapsed)}
-          className="text-[#1ca5b8] hover:text-[#21c3d8] p-1 z-10"
+          className="text-secondary hover:text-secondary-dark p-1 z-10"
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
@@ -47,7 +47,7 @@ export const Navbar = ({ isCollapsed, onToggleCollapse }: NavbarProps) => {
       </div>
 
       {currentProject && (
-        <div className={`px-6 py-4 border-y border-[#1ca5b8]/20 relative ${isCollapsed ? 'text-center' : ''}`}>
+        <div className={`px-6 py-4 border-y border-secondary/20 relative ${isCollapsed ? 'text-center' : ''}`}>
           <div className="flex items-center justify-between">
             <h2 className={`text-lg font-semibold truncate transition-opacity duration-300
               ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100'}`}>
@@ -57,13 +57,13 @@ export const Navbar = ({ isCollapsed, onToggleCollapse }: NavbarProps) => {
               <div className="flex items-center gap-1">
                 <Link 
                   to="/project-settings" 
-                  className="p-1.5 text-[#1ca5b8] hover:text-[#21c3d8]"
+                  className="p-1.5 text-secondary hover:text-secondary-dark"
                 >
                   <Settings size={20} />
                 </Link>
                 <button
                   onClick={() => setShowProjectDropdown(!showProjectDropdown)}
-                  className="p-1.5 text-[#1ca5b8] hover:text-[#21c3d8]"
+                  className="p-1.5 text-secondary hover:text-secondary-dark"
                 >
                   <SwitchCamera size={20} />
                 </button>
@@ -78,7 +78,7 @@ export const Navbar = ({ isCollapsed, onToggleCollapse }: NavbarProps) => {
             <div className="mt-2">
               <button
                 onClick={() => setShowProjectDropdown(!showProjectDropdown)}
-                className="w-full flex items-center justify-center p-2 bg-[#1ca5b8]/10 rounded-lg text-[#1ca5b8] hover:bg-[#1ca5b8]/20 transition-colors"
+                className="w-full flex items-center justify-center p-2 bg-secondary/10 rounded-lg text-secondary hover:bg-secondary/20 transition-colors"
               >
                 <SwitchCamera size={20} />
               </button>
@@ -99,8 +99,8 @@ export const Navbar = ({ isCollapsed, onToggleCollapse }: NavbarProps) => {
                     setCurrentProject(project);
                     setShowProjectDropdown(false);
                   }}
-                  className={`w-full p-2.5 text-left hover:bg-[#1ca5b8]/10 transition-colors
-                    ${project.id === currentProject.id ? 'bg-[#1ca5b8]/10 text-[#1ca5b8]' : 'text-gray-700'}`}
+                  className={`w-full p-2.5 text-left hover:bg-secondary/10 transition-colors
+                    ${project.id === currentProject.id ? 'bg-secondary/10 text-secondary' : 'text-gray-700'}`}
                 >
                   <div className="font-medium text-sm">{project.name}</div>
                   <div className="text-xs text-gray-500 truncate">{project.address}</div>
@@ -137,8 +137,8 @@ export const Navbar = ({ isCollapsed, onToggleCollapse }: NavbarProps) => {
           to="/profile"
           className={`flex items-center gap-3 px-6 py-3 mt-auto transition-colors
             ${location.pathname === '/profile'
-              ? 'bg-[#1ca5b8] text-white' 
-              : 'text-gray-300 hover:bg-[#1ca5b8]/10 hover:text-white'
+              ? 'bg-secondary text-white' 
+              : 'text-gray-300 hover:bg-secondary/10 hover:text-white'
             } ${isCollapsed ? 'justify-center' : ''}`}
         >
           <UserCircle size={20} />
@@ -171,8 +171,8 @@ const NavLink = ({
     to={to}
     className={`flex items-center gap-3 px-6 py-3 transition-colors
       ${active 
-        ? 'bg-[#1ca5b8] text-white' 
-        : 'text-gray-300 hover:bg-[#1ca5b8]/10 hover:text-white'
+        ? 'bg-secondary text-white' 
+        : 'text-gray-300 hover:bg-secondary/10 hover:text-white'
       } ${collapsed ? 'justify-center' : ''}`}
   >
     {icon}

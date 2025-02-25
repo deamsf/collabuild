@@ -20,14 +20,20 @@ export interface Project {
   created_at: string;
 }
 
+export type TaskStatus = 'not_yet' | 'to_do' | 'in_progress' | 'waiting' | 'done' | 'canceled';
+
 export interface Task {
   id: string;
   project_id: string;
   title: string;
-  status: 'to-do' | 'in-progress' | 'done';
-  phase: string;
-  dueDate: string;
+  description: string;
+  status: TaskStatus;
+  author_id: string | null;
+  assignee_id: string | null;
+  due_date: string | null;
+  completion_date: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface TeamMember {
@@ -59,4 +65,17 @@ export interface EmailTemplate {
   description: string;
   last_modified: string;
   created_at: string;
+}
+
+export interface Phase {
+  id: string;
+  project_id: string;
+  name: string;
+  description: string;
+  start_date: string;
+  due_date: string;
+  progress: number;
+  status: 'not_started' | 'in_progress' | 'completed' | 'delayed';
+  created_at: string;
+  updated_at: string;
 }
