@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { File, Image, Upload, Share2, Grid, List as ListIcon, Filter, SortDesc, Download, Trash2 } from 'lucide-react';
+import { File, Image, Upload, Share2, Grid, List as ListIcon, Filter, SortDesc, Download, Trash2, Tag as TagIcon } from 'lucide-react';
 import { useProjectContext } from '../context/ProjectContext';
 import { ResourceUploader } from '../components/resources/ResourceUploader';
 import { ResourceList } from '../components/resources/ResourceList';
@@ -7,6 +7,7 @@ import { ResourceGrid } from '../components/resources/ResourceGrid';
 import { ShareModal } from '../components/resources/ShareModal';
 import { SharesManager } from '../components/resources/SharesManager';
 import { dummyResources } from '../data/dummyResources';
+import type { Resource } from '../types';
 
 type ResourceView = 'documents' | 'photos';
 type ViewMode = 'list' | 'grid';
@@ -199,7 +200,7 @@ export const Resources = () => {
                   : 'bg-surface-light dark:bg-surface-dark text-text-light-secondary dark:text-text-dark-secondary'
               }`}
             >
-              <Tag size={14} />
+              <TagIcon size={14} />
               {tag}
             </button>
           ))}
