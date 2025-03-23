@@ -1,7 +1,13 @@
-import React, { useState } from 'react';
-import { Navigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Building2 } from 'lucide-react';
+
+interface LocationState {
+  from?: {
+    pathname: string;
+  };
+}
 
 export const Login = () => {
   const { user, signIn } = useAuth();
@@ -9,6 +15,11 @@ export const Login = () => {
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get the redirect path from location state if available
+  const from = (location.state as LocationState)?.from?.pathname || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,6 +28,7 @@ export const Login = () => {
 
     try {
       await signIn(email, password);
+      // Successful login will automatically redirect due to the user state change
     } catch (err) {
       setError('Invalid email or password. Please try again.');
     }
@@ -29,8 +41,17 @@ export const Login = () => {
     setPassword('azerazer');
   };
 
+  // If already authenticated, redirect to the intended page or dashboard
+  useEffect(() => {
+    if (user) {
+      navigate(from, { replace: true });
+    }
+  }, [user, navigate, from]);
+
+  // Don't use Navigate component here as we're handling redirect in useEffect
+  // This prevents potential redirect loops
   if (user) {
-    return <Navigate to="/dashboard" replace />;
+    return null;
   }
 
   return (
@@ -39,7 +60,7 @@ export const Login = () => {
         <div className="text-center">
           <Building2 className="mx-auto h-12 w-12 text-secondary" />
           <h2 className="mt-6 text-3xl font-bold text-primary">
-            Welcome to Kompanjon
+            Welcome to Collabuild
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             Sign in to manage your construction projects

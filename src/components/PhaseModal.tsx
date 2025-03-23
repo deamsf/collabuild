@@ -28,10 +28,12 @@ export const PhaseModal = ({
     status: phase?.status || 'not_started' as Phase['status']
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
 
     try {
       await onSubmit({
@@ -46,6 +48,7 @@ export const PhaseModal = ({
       onClose();
     } catch (error) {
       console.error('Error saving phase:', error);
+      setError('Failed to save phase. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -58,6 +61,12 @@ export const PhaseModal = ({
       title={mode === 'create' ? 'Create Phase' : 'Edit Phase'}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="p-4 bg-accent-red/10 text-accent-red rounded-lg">
+            {error}
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-text-light-primary dark:text-text-dark-primary">
             Name

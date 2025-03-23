@@ -10,6 +10,9 @@ export function useTeamMembers(projectId: string | undefined) {
   useEffect(() => {
     if (projectId) {
       fetchTeamMembers();
+    } else {
+      setTeamMembers([]);
+      setLoading(false);
     }
   }, [projectId]);
 
@@ -26,6 +29,7 @@ export function useTeamMembers(projectId: string | undefined) {
       setTeamMembers(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching team members:', err);
     } finally {
       setLoading(false);
     }
@@ -33,13 +37,19 @@ export function useTeamMembers(projectId: string | undefined) {
 
   async function addMember(member: Omit<TeamMember, 'id' | 'created_at'>) {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('team_members')
-        .insert([member]);
+        .insert([member])
+        .select()
+        .single();
       
       if (error) throw error;
-      await fetchTeamMembers();
+      
+      // Update local state
+      setTeamMembers(prev => [...prev, data]);
+      return data;
     } catch (err) {
+      console.error('Error adding team member:', err);
       throw err;
     }
   }
@@ -59,8 +69,11 @@ export function useTeamMembers(projectId: string | undefined) {
         .eq('id', member.id);
       
       if (error) throw error;
-      await fetchTeamMembers();
+      
+      // Update local state
+      setTeamMembers(prev => prev.map(m => m.id === member.id ? member : m));
     } catch (err) {
+      console.error('Error updating team member:', err);
       throw err;
     }
   }
@@ -73,8 +86,11 @@ export function useTeamMembers(projectId: string | undefined) {
         .eq('id', memberId);
       
       if (error) throw error;
-      await fetchTeamMembers();
+      
+      // Update local state
+      setTeamMembers(prev => prev.filter(m => m.id !== memberId));
     } catch (err) {
+      console.error('Error removing team member:', err);
       throw err;
     }
   }

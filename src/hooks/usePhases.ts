@@ -26,6 +26,7 @@ export function usePhases(projectId: string | undefined) {
       setPhases(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching phases:', err);
     } finally {
       setLoading(false);
     }
@@ -33,13 +34,22 @@ export function usePhases(projectId: string | undefined) {
 
   async function addPhase(phase: Omit<Phase, 'id' | 'created_at' | 'updated_at'>) {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('phases')
-        .insert([phase]);
-      
+        .insert([{
+          ...phase,
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
       if (error) throw error;
-      await fetchPhases();
+      
+      // Update local state
+      setPhases(prev => [data, ...prev]);
+      return data;
     } catch (err) {
+      console.error('Error adding phase:', err);
       throw err;
     }
   }
@@ -58,10 +68,13 @@ export function usePhases(projectId: string | undefined) {
           updated_at: new Date().toISOString()
         })
         .eq('id', phase.id);
-      
+
       if (error) throw error;
-      await fetchPhases();
+      
+      // Update local state
+      setPhases(prev => prev.map(p => p.id === phase.id ? { ...p, ...phase } : p));
     } catch (err) {
+      console.error('Error updating phase:', err);
       throw err;
     }
   }
@@ -72,10 +85,13 @@ export function usePhases(projectId: string | undefined) {
         .from('phases')
         .delete()
         .eq('id', phaseId);
-      
+
       if (error) throw error;
-      await fetchPhases();
+      
+      // Update local state
+      setPhases(prev => prev.filter(p => p.id !== phaseId));
     } catch (err) {
+      console.error('Error removing phase:', err);
       throw err;
     }
   }

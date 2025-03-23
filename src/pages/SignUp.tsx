@@ -54,7 +54,7 @@ export const SignUp = () => {
         <div className="text-center">
           <Building2 className="mx-auto h-12 w-12 text-secondary" />
           <h2 className="mt-6 text-3xl font-bold text-primary">
-            Join Kompanjon
+            Join Collabuild
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             Create your account to get started

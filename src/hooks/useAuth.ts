@@ -34,8 +34,6 @@ export function useAuth() {
       });
       
       if (signInError) throw signInError;
-      
-      // Update user state immediately after successful sign in
       setUser(data.user);
       
     } catch (err) {
@@ -58,8 +56,6 @@ export function useAuth() {
       });
       
       if (signUpError) throw signUpError;
-      
-      // Update user state immediately after successful sign up
       setUser(data.user);
       
     } catch (err) {
@@ -74,8 +70,6 @@ export function useAuth() {
       const { error: signOutError } = await supabase.auth.signOut();
       
       if (signOutError) throw signOutError;
-      
-      // Clear user state immediately after successful sign out
       setUser(null);
       
     } catch (err) {

@@ -1,73 +1,145 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import type { Task, TaskStatus } from '../types';
 
-// In-memory storage for tasks
-let tasks: Task[] = [];
-
 export function useTasks(projectId: string | undefined) {
-  const [loading, setLoading] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (projectId) {
+      fetchTasks();
+    }
+  }, [projectId]);
+
+  async function fetchTasks() {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setTasks(data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching tasks:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function addTask(task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'completion_date'>) {
     try {
-      const newTask: Task = {
-        id: Math.random().toString(36).substr(2, 9),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        completion_date: null,
-        ...task
+      const taskData = {
+        ...task,
+        updated_at: new Date().toISOString()
       };
-      tasks = [...tasks, newTask];
-      return newTask;
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([taskData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      // Update local state with the new task
+      setTasks(prev => [data, ...prev]);
+      return data;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error adding task:', err);
       throw err;
     }
   }
 
   async function updateTask(task: Partial<Task> & { id: string }) {
     try {
-      tasks = tasks.map(t => t.id === task.id ? {
-        ...t,
+      const updateData = {
         ...task,
         updated_at: new Date().toISOString()
-      } : t);
+      };
+
+      const { error } = await supabase
+        .from('tasks')
+        .update(updateData)
+        .eq('id', task.id);
+
+      if (error) throw error;
+      
+      // Update local state
+      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, ...updateData } : t));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error updating task:', err);
       throw err;
     }
   }
 
   async function updateTaskStatus(taskId: string, status: TaskStatus) {
     try {
-      tasks = tasks.map(t => t.id === taskId ? {
-        ...t,
+      const taskToUpdate = tasks.find(t => t.id === taskId);
+      if (!taskToUpdate) throw new Error('Task not found');
+
+      const updates: Partial<Task> = {
         status,
-        updated_at: new Date().toISOString(),
-        completion_date: status === 'done' ? new Date().toISOString() : null
-      } : t);
+        updated_at: new Date().toISOString()
+      };
+
+      // If task is marked as done, set completion date
+      if (status === 'done') {
+        updates.completion_date = new Date().toISOString();
+      } else if (taskToUpdate.completion_date) {
+        // If task was previously done and now it's not, clear completion date
+        updates.completion_date = null;
+      }
+
+      const { error } = await supabase
+        .from('tasks')
+        .update(updates)
+        .eq('id', taskId);
+
+      if (error) throw error;
+      
+      // Update local state
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates } : t));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error updating task status:', err);
       throw err;
     }
   }
 
   async function removeTask(taskId: string) {
     try {
-      tasks = tasks.filter(t => t.id !== taskId);
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) throw error;
+      
+      // Update local state
+      setTasks(prev => prev.filter(t => t.id !== taskId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error removing task:', err);
       throw err;
     }
   }
 
   return {
-    tasks: tasks.filter(t => t.project_id === projectId),
+    tasks,
     loading,
     error,
     addTask,
     updateTask,
     updateTaskStatus,
-    removeTask
+    removeTask,
+    refetch: fetchTasks
   };
 }

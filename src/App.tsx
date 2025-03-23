@@ -15,6 +15,7 @@ import { ProjectSettings } from './pages/ProjectSettings';
 import { Login } from './pages/Login';
 import { SignUp } from './pages/SignUp';
 import { Onboarding } from './pages/Onboarding';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   const [isNavbarCollapsed, setIsNavbarCollapsed] = React.useState(false);
@@ -26,27 +27,36 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
-            <Route path="/onboarding" element={<Onboarding />} />
+            <Route 
+              path="/onboarding" 
+              element={
+                <ProtectedRoute>
+                  <Onboarding />
+                </ProtectedRoute>
+              } 
+            />
             <Route
               path="/*"
               element={
-                <div className="min-h-screen bg-surface-light dark:bg-surface-dark transition-colors duration-200">
-                  <Navbar isCollapsed={isNavbarCollapsed} onToggleCollapse={setIsNavbarCollapsed} />
-                  <main className={`transition-all duration-300 ${isNavbarCollapsed ? 'ml-20' : 'ml-64'} p-8`}>
-                    <Routes>
-                      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/tasks" element={<Tasks />} />
-                      <Route path="/resources" element={<Resources />} />
-                      <Route path="/team" element={<Team />} />
-                      <Route path="/templates" element={<Templates />} />
-                      <Route path="/advice" element={<Advice />} />
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/projects" element={<Projects />} />
-                      <Route path="/project-settings" element={<ProjectSettings />} />
-                    </Routes>
-                  </main>
-                </div>
+                <ProtectedRoute>
+                  <div className="min-h-screen bg-surface-light dark:bg-surface-dark transition-colors duration-200">
+                    <Navbar isCollapsed={isNavbarCollapsed} onToggleCollapse={setIsNavbarCollapsed} />
+                    <main className={`transition-all duration-300 ${isNavbarCollapsed ? 'ml-20' : 'ml-64'} p-8`}>
+                      <Routes>
+                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/tasks" element={<Tasks />} />
+                        <Route path="/resources" element={<Resources />} />
+                        <Route path="/team" element={<Team />} />
+                        <Route path="/templates" element={<Templates />} />
+                        <Route path="/advice" element={<Advice />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/projects" element={<Projects />} />
+                        <Route path="/project-settings" element={<ProjectSettings />} />
+                      </Routes>
+                    </main>
+                  </div>
+                </ProtectedRoute>
               }
             />
           </Routes>

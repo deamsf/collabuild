@@ -15,8 +15,8 @@ type TaskView = 'tasks' | 'agenda' | 'planning';
 
 export const Tasks = () => {
   const { currentProject } = useProjectContext();
-  const { tasks, addTask, updateTask, updateTaskStatus, removeTask } = useTasks(currentProject?.id);
-  const { phases, addPhase, updatePhase, removePhase } = usePhases(currentProject?.id);
+  const { tasks, addTask, updateTask, updateTaskStatus, removeTask, loading: tasksLoading } = useTasks(currentProject?.id);
+  const { phases, addPhase, updatePhase, removePhase, loading: phasesLoading } = usePhases(currentProject?.id);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isPhaseModalOpen, setIsPhaseModalOpen] = useState(false);
   const [isDeleteTaskModalOpen, setIsDeleteTaskModalOpen] = useState(false);
@@ -37,39 +37,76 @@ export const Tasks = () => {
     );
   }
 
+  if (tasksLoading || phasesLoading) {
+    return (
+      <div className="bg-background-light dark:bg-background-dark p-6 rounded-lg shadow-md">
+        <div className="flex justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary"></div>
+        </div>
+        <p className="text-center text-text-light-secondary dark:text-text-dark-secondary mt-4">
+          Loading tasks and phases...
+        </p>
+      </div>
+    );
+  }
+
   const handleTaskSubmit = async (taskData: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'completion_date'>) => {
-    if (editingTask) {
-      await updateTask({ ...taskData, id: editingTask.id });
-    } else {
-      await addTask(taskData);
+    try {
+      if (editingTask) {
+        await updateTask({ ...taskData, id: editingTask.id });
+      } else {
+        await addTask(taskData);
+      }
+      setIsTaskModalOpen(false);
+      setEditingTask(undefined);
+    } catch (error) {
+      console.error('Error saving task:', error);
     }
-    setIsTaskModalOpen(false);
-    setEditingTask(undefined);
   };
 
   const handlePhaseSubmit = async (phaseData: Omit<Phase, 'id' | 'created_at' | 'updated_at'>) => {
-    if (editingPhase) {
-      await updatePhase({ ...phaseData, id: editingPhase.id });
-    } else {
-      await addPhase(phaseData);
+    try {
+      if (editingPhase) {
+        await updatePhase({ ...phaseData, id: editingPhase.id });
+      } else {
+        await addPhase(phaseData);
+      }
+      setIsPhaseModalOpen(false);
+      setEditingPhase(undefined);
+    } catch (error) {
+      console.error('Error saving phase:', error);
     }
-    setIsPhaseModalOpen(false);
-    setEditingPhase(undefined);
   };
 
   const handleTaskDelete = async () => {
     if (taskToDelete) {
-      await removeTask(taskToDelete.id);
-      setIsDeleteTaskModalOpen(false);
-      setTaskToDelete(null);
+      try {
+        await removeTask(taskToDelete.id);
+        setIsDeleteTaskModalOpen(false);
+        setTaskToDelete(null);
+      } catch (error) {
+        console.error('Error deleting task:', error);
+      }
     }
   };
 
   const handlePhaseDelete = async () => {
     if (phaseToDelete) {
-      await removePhase(phaseToDelete.id);
-      setIsDeletePhaseModalOpen(false);
-      setPhaseToDelete(null);
+      try {
+        await removePhase(phaseToDelete.id);
+        setIsDeletePhaseModalOpen(false);
+        setPhaseToDelete(null);
+      } catch (error) {
+        console.error('Error deleting phase:', error);
+      }
+    }
+  };
+
+  const handleStatusUpdate = async (taskId: string, newStatus: TaskStatus) => {
+    try {
+      await updateTaskStatus(taskId, newStatus);
+    } catch (error) {
+      console.error('Error updating task status:', error);
     }
   };
 
@@ -126,7 +163,7 @@ export const Tasks = () => {
       {currentView === 'tasks' && (
         <KanbanBoard
           tasks={tasks}
-          onUpdateStatus={updateTaskStatus}
+          onUpdateStatus={handleStatusUpdate}
           onEditTask={(task) => {
             setEditingTask(task);
             setIsTaskModalOpen(true);

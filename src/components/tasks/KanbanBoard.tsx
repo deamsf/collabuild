@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { ListTodo, Plus, ChevronDown } from 'lucide-react';
+import { ListTodo, Plus, ChevronUp } from 'lucide-react';
 import { Task, TaskStatus } from '../../types';
 import { TaskCard } from '../TaskCard';
 
@@ -28,8 +28,14 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onCreateTask
 }) => {
   const [showCanceled, setShowCanceled] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
 
   const handleDragEnd = async (result: DropResult) => {
+    setIsDragging(false);
     const { destination, source, draggableId } = result;
 
     if (!destination) return;
@@ -63,7 +69,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </button>
         </div>
 
-        <DragDropContext onDragEnd={handleDragEnd}>
+        <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {COLUMNS.map(column => {
               if (column.id === 'canceled' && !showCanceled) return null;
@@ -76,10 +82,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         <button
                           onClick={() => setShowCanceled(!showCanceled)}
                           className="p-1 hover:bg-surface-light dark:hover:bg-surface-dark rounded"
+                          aria-label={showCanceled ? "Hide canceled tasks" : "Show canceled tasks"}
                         >
-                          <ChevronDown
+                          <ChevronUp
                             size={16}
-                            className={`transition-transform ${showCanceled ? '' : '-rotate-90'}`}
+                            className={`transition-transform ${showCanceled ? '' : 'rotate-180'}`}
                           />
                         </button>
                       )}
@@ -137,7 +144,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         </DragDropContext>
       </div>
 
-      <div className="bg-background-light dark:bg-background-dark p-6 rounded-lg shadow-md">
+      <div className="bg-background-light dark:bg-background-dark p-6 rounded-lg shadow-md mt-6">
         <h2 className="text-xl font-semibold mb-4 text-text-light-primary dark:text-text-dark-primary">
           Not Yet Tasks
         </h2>
@@ -164,7 +171,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     onClick={() => onUpdateStatus(task.id, 'to_do')}
                     className="px-3 py-1 text-sm bg-secondary text-white rounded hover:bg-secondary-dark"
                   >
-                    Make To Do
+                    Move to To Do
                   </button>
                   <button
                     onClick={() => onDeleteTask(task.id)}
